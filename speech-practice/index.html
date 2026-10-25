@@ -172,7 +172,7 @@ const ops=document.createElement("div");ops.className="sentence-actions";const l
 $("counter").textContent="共 "+state.sentences.length+" 句 · 约 "+count+" 个词";
 $("phraseMode").classList.remove("active");$("allTranslate").classList.remove("active");$("allTranslate").querySelector("span").textContent="全文对照";$("modeHelp").textContent="👆 点击英文单词：听发音 + 看中文。点「译句」看句子的中文。";return !!state.sentences.length;}
 function start(){const s=$("scriptInput").value.trim();if(!s){toast("请先粘贴你的英文演讲稿");$("scriptInput").focus();return;}storageSet(s);if(!buildDoc(s)){toast("请粘贴有效的英文稿件");return;}$("editor").hidden=true;$("practice").hidden=false;$("bottom").hidden=false;$("editBtn").hidden=false;window.scrollTo(0,0);toast("开始练习：点击单词即可听发音");}
-function edit(){stop(false);hideDetail();$("editor").hidden=false;$("practice").hidden=true;$("bottom").hidden=true;$("editBtn").hidden=true;window.scrollTo({top:0,behavior:"instant"});}
+function edit(){stop(false);hideDetail();$("editor").hidden=false;$("practice").hidden=true;$("bottom").hidden=true;$("editBtn").hidden=true;window.scrollTo(0,0);}
 $("startBtn").addEventListener("click",start);
 $("editBtn").addEventListener("click",edit);
 $("demoBtn").addEventListener("click",function(){$("scriptInput").value="Good morning everyone. Today, I will explain our cybersecurity strategy for Atlassian. First, we will identify the main risks and challenges. Next, we will recommend practical solutions to protect customer information. Finally, we will present a two-year implementation plan. Thank you for listening.";start();});
