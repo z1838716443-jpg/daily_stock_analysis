@@ -128,6 +128,10 @@ button:focus-visible,textarea:focus-visible,select:focus-visible,input:focus-vis
 "use strict";
 const $ = function(id){return document.getElementById(id);};
 const cache=new Map();
+let translationSlots=0;
+const translationJobs=[];
+function queuedTranslation(fn){return new Promise(function(resolve,reject){translationJobs.push({fn:fn,resolve:resolve,reject:reject});pumpTranslation();});}
+function pumpTranslation(){while(translationSlots<2&&translationJobs.length){const job=translationJobs.shift();translationSlots++;Promise.resolve().then(job.fn).then(job.resolve,job.reject).finally(function(){translationSlots--;pumpTranslation();});}}
 const state={sentences:[],dual:false,phrase:false,begin:null,selection:null,detailRequest:0,run:0};
 let toastTimer=0;
 function toast(msg){const e=$("toast");e.textContent=msg;e.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(function(){e.classList.remove("show");},2500);}
@@ -159,7 +163,7 @@ if(!same)fetchTranslation(context,"en|zh-CN").then(function(t){if(req===state.de
 function onWord(rec,index,button){const old=document.querySelector(".word.current");if(old)old.classList.remove("current");button.classList.add("current");if(state.phrase){if(!state.begin||state.begin.rec!==rec){resetMarked();state.begin={rec:rec,index:index};button.classList.add("marked");toast("再点同一句里另一个词，翻译两词之间的短语");return;}
 const lo=Math.min(index,state.begin.index);const hi=Math.max(index,state.begin.index);const selected=rec.words.slice(lo,hi+1);resetMarked();for(const a of selected)a.button.classList.add("marked");const phrase=selected.map(function(x){return x.value;}).join(" ");state.begin=null;showDetail(phrase,rec.text,"短语翻译");say(phrase);return;}
 resetMarked();showDetail(rec.words[index].value,rec.text,"单词释义");say(rec.words[index].value);}
-function ensureTranslated(rec){if(rec.loaded)return;rec.loaded=true;rec.cn.textContent="正在翻译…";fetchTranslation(rec.text,"en|zh-CN").then(function(t){rec.cn.textContent=t;}).catch(function(){rec.cn.textContent="翻译暂不可用，可稍后再次点击「译句」重试";rec.loaded=false;});}
+function ensureTranslated(rec){if(rec.loaded)return;rec.loaded=true;rec.cn.textContent="正在翻译…";queuedTranslation(function(){return fetchTranslation(rec.text,"en|zh-CN");}).then(function(t){rec.cn.textContent=t;}).catch(function(){rec.cn.textContent="翻译暂不可用，可稍后再次点击「译句」重试";rec.loaded=false;});}
 function syncTranslation(){for(const rec of state.sentences){rec.cn.hidden=!(state.dual||rec.open);rec.button.classList.toggle("on",state.dual||rec.open);if(!rec.cn.hidden)ensureTranslated(rec);}}
 function buildDoc(s){stop(false);hideDetail();state.dual=false;state.phrase=false;state.begin=null;state.sentences=[];$("document").replaceChildren();const paras=s.replace(/\r\n/g,"\n").split(/\n+/).map(function(x){return x.trim();}).filter(Boolean);
 let count=0;
@@ -167,7 +171,7 @@ for(const para of paras){for(const line of splitSentences(para)){const sent=line
 const ops=document.createElement("div");ops.className="sentence-actions";const listen=document.createElement("button");listen.className="mini";listen.type="button";listen.textContent="🔊 听这句";listen.addEventListener("click",function(){say(rec.text,rec.node);});const trans=document.createElement("button");trans.type="button";trans.className="mini";trans.textContent="译句 / 隐藏";trans.addEventListener("click",function(){rec.open=!rec.open;syncTranslation();});rec.button=trans;ops.append(listen,trans);const cn=document.createElement("div");cn.className="cn";cn.hidden=true;rec.cn=cn;sec.append(en,ops,cn);rec.node=sec;$("document").appendChild(sec);state.sentences.push(rec);count+=rec.words.length;}}
 $("counter").textContent="共 "+state.sentences.length+" 句 · 约 "+count+" 个词";
 $("phraseMode").classList.remove("active");$("allTranslate").classList.remove("active");$("allTranslate").querySelector("span").textContent="全文对照";$("modeHelp").textContent="👆 点击英文单词：听发音 + 看中文。点「译句」看句子的中文。";return !!state.sentences.length;}
-function start(){const s=$("scriptInput").value.trim();if(!s){toast("请先粘贴你的英文演讲稿");$("scriptInput").focus();return;}storageSet(s);if(!buildDoc(s)){toast("请粘贴有效的英文稿件");return;}$("editor").hidden=true;$("practice").hidden=false;$("bottom").hidden=false;$("editBtn").hidden=false;window.scrollTo({top:0,behavior:"instant"});toast("开始练习：点击单词即可听发音");}
+function start(){const s=$("scriptInput").value.trim();if(!s){toast("请先粘贴你的英文演讲稿");$("scriptInput").focus();return;}storageSet(s);if(!buildDoc(s)){toast("请粘贴有效的英文稿件");return;}$("editor").hidden=true;$("practice").hidden=false;$("bottom").hidden=false;$("editBtn").hidden=false;window.scrollTo(0,0);toast("开始练习：点击单词即可听发音");}
 function edit(){stop(false);hideDetail();$("editor").hidden=false;$("practice").hidden=true;$("bottom").hidden=true;$("editBtn").hidden=true;window.scrollTo({top:0,behavior:"instant"});}
 $("startBtn").addEventListener("click",start);
 $("editBtn").addEventListener("click",edit);
