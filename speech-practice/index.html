@@ -84,7 +84,7 @@ button:focus-visible,textarea:focus-visible,select:focus-visible,input:focus-vis
 <div class="section-label">粘贴英文演讲稿 <small>全文可复制粘贴</small></div>
 <textarea id="scriptInput" placeholder="在这里粘贴你的英文演讲稿，例如：Good morning everyone. Today, I will introduce our proposal..."></textarea>
 <div class="btnrow"><button type="button" class="btn primary" id="startBtn">开始练习 →</button><button type="button" class="btn white" id="demoBtn">试用示例</button></div>
-<div class="notice">✅ 这是在线互动网页，不需要下载、解压或额外上传文件。文稿保存在本机浏览器；点击翻译时，请求的文字会发送给第三方翻译服务。</div>
+<div class="notice" id="appStatus">⏳ 正在启动网页功能。如果始终显示这句话，请用 Safari 或 Chrome 直接打开在线网址。</div>
 <div class="tip">推荐用 iPhone Safari 或安卓 Chrome 打开。发音取决于设备的系统语音；翻译需要网络。</div>
 </div>
 <div class="btnrow"><button class="btn ghost" id="listenTest" type="button">▶ 试听英文发音</button><button class="btn ghost" id="openQuick" type="button">中英互译</button></div>
@@ -191,7 +191,7 @@ $("quickClose").addEventListener("click",closeQuick);
 $("quickOverlay").addEventListener("click",function(e){if(e.target===this)closeQuick();});
 $("quickGo").addEventListener("click",async function(){const s=$("quickInput").value.trim();if(!s){toast("请输入要翻译的文字");return;}$("quickResult").textContent="正在翻译…";try{$("quickResult").textContent=await fetchTranslation(s,$("direction").value);}catch(e){$("quickResult").textContent="翻译暂不可用。请检查网络，或稍后再试。";}});
 document.addEventListener("keydown",function(e){if(e.key==="Escape"){closeQuick();hideDetail();}});
-if(!voiceAvailable()){$("listenTest").textContent="当前浏览器不支持直接播放发音";}else{try{window.speechSynthesis.getVoices();window.speechSynthesis.addEventListener("voiceschanged",function(){});}catch(e){}}
+if(!voiceAvailable()){$("listenTest").textContent="当前浏览器不支持直接播放发音";$("appStatus").textContent="⚠️ 页面按钮已启动，但此浏览器不支持语音朗读，请用 Safari 或 Chrome 打开。";}else{$("appStatus").textContent="✅ 网页已启动。点击单词可以听发音和看翻译，文稿仅存本机浏览器；翻译内容会发送至 MyMemory 服务。";try{window.speechSynthesis.getVoices();window.speechSynthesis.addEventListener("voiceschanged",function(){});}catch(e){}}
 })();
 </script>
 </body>
